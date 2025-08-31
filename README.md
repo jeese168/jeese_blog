@@ -1,2 +1,2 @@
 # jeese_blog
-把git当成个人博客
+把github当成个人博客
