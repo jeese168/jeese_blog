@@ -54,7 +54,7 @@ unset https_proxy http_proxy all_proxy
 
 查询终端走有没有走代理（根据ip判断）
 ```bash
-curl ipinfo.io/ip
+curl ipinfo.io/ip
 ```
 
 ---
