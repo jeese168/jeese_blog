@@ -15,7 +15,76 @@ open -a TextEdit ~/.zprofile
 在打开的文本文件中添加：
 
 ```text
-export https_proxy=http://127.0.0.1:7890 http_proxy=http://127.0.0.1:7890 all_proxy=socks5://127.0.0.1:7890
+# ============================================
+# 代理配置 - 默认关闭
+# ============================================
+export NO_PROXY="localhost,127.0.0.1,::1,*.local"
+export no_proxy="$NO_PROXY"
+
+# ============================================
+# 快速切换函数
+# ============================================
+proxy-clash() {
+    if ! nc -z 127.0.0.1 7890 2>/dev/null; then
+        echo "⚠ Clash (7890) 未运行，请先启动！"
+        return 1
+    fi
+    export NO_PROXY="localhost,127.0.0.1,::1,*.local"
+    export no_proxy="$NO_PROXY"
+    export http_proxy=http://127.0.0.1:7890
+    export https_proxy=http://127.0.0.1:7890
+    export all_proxy=http://127.0.0.1:7890
+    git config --global http.proxy http://127.0.0.1:7890 2>/dev/null
+    echo "✅ Clash 代理已启用"
+}
+
+proxy-v2ray() {
+    if ! nc -z 127.0.0.1 10808 2>/dev/null; then
+        echo "⚠ V2Ray (10808) 未运行，请先启动！"
+        return 1
+    fi
+    export NO_PROXY="localhost,127.0.0.1,::1,*.local"
+    export no_proxy="$NO_PROXY"
+    export http_proxy=http://127.0.0.1:10808
+    export https_proxy=http://127.0.0.1:10808
+    export all_proxy=http://127.0.0.1:10808
+    git config --global http.proxy http://127.0.0.1:10808 2>/dev/null
+    echo "✅ V2Ray 代理已启用"
+}
+
+proxy-off() {
+    unset http_proxy https_proxy all_proxy
+    unset HTTP_PROXY HTTPS_PROXY ALL_PROXY
+    git config --global --unset http.proxy 2>/dev/null
+    git config --global --unset https.proxy 2>/dev/null
+    echo "❌ 代理已关闭"
+}
+
+proxy-status() {
+    if [ -z "$http_proxy" ]; then
+        echo "❌ 当前无代理"
+    else
+        echo "✅ 代理: $http_proxy"
+    fi
+    
+    echo -n "🌐 外网 IP: "
+    ip=$(curl -s --max-time 3 ipinfo.io/ip 2>/dev/null)
+    if [ -n "$ip" ]; then
+        echo "$ip"
+        if curl -s --max-time 5 https://www.google.com >/dev/null 2>&1; then
+            echo "✅ Google 可访问"
+        else
+            echo "❌ Google 不可达"
+        fi
+    else
+        echo "⚠ 获取失败"
+    fi
+}
+
+alias pc='proxy-clash'
+alias pv='proxy-v2ray'
+alias poff='proxy-off'
+alias ps='proxy-status'
 ```
 
 保存文件后，重新加载配置：
@@ -41,22 +110,29 @@ source ~/.zprofile
 **查看当前代理设置：**
 
 ```bash
-echo $https_proxy
-echo $http_proxy
-echo $all_proxy
+ps
 ```
 
-**临时某个终端取消代理：**
+**取消代理：**
 
 ```bash
-unset https_proxy http_proxy all_proxy
+poff
 ```
 
-查询终端走有没有走代理（根据ip判断）
+**查询终端走有没有走代理（根据ip判断）**
 ```bash
-curl ipinfo.io/ip
+ps
 ```
 
+**切换为v2ray代理(端口：10808)**
+```
+pv
+```
+
+**切换为clash代理(端口：7890)**
+```
+pc
+```
 ---
 
 ## 开发依赖设置（Homebrew）
